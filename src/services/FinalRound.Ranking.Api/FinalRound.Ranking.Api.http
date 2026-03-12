@@ -1,0 +1,6 @@
+@FinalRound.Ranking.Api_HostAddress = http://localhost:5051
+
+GET {{FinalRound.Ranking.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

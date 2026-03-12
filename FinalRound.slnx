@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/edge/">
+    <Project Path="src/edge/FinalRound.Edge.Api/FinalRound.Edge.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/services/">
+    <Project Path="src/services/FinalRound.Identity.Api/FinalRound.Identity.Api.csproj" />
+    <Project Path="src/services/FinalRound.Match.Api/FinalRound.Match.Api.csproj" />
+    <Project Path="src/services/FinalRound.Notification.Api/FinalRound.Notification.Api.csproj" />
+    <Project Path="src/services/FinalRound.Ranking.Api/FinalRound.Ranking.Api.csproj" />
+    <Project Path="src/services/FinalRound.Tournament.Api/FinalRound.Tournament.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/shared/">
+    <Project Path="src/shared/FinalRound.Common/FinalRound.Common.csproj" />
+    <Project Path="src/shared/FinalRound.Contracts/FinalRound.Contracts.csproj" />
+    <Project Path="src/shared/FinalRound.ServiceDefaults/FinalRound.ServiceDefaults.csproj" />
+  </Folder>
+</Solution>

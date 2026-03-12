@@ -1,0 +1,199 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: finalround-mysql
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123!
+      MYSQL_DATABASE: finalround
+    ports:
+      - "3307:3306"
+    volumes:
+      - finalround_mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    networks: [finalround]
+
+  redis:
+    image: redis:7-alpine
+    container_name: finalround-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - finalround_redis_data:/data
+    restart: unless-stopped
+    networks: [finalround]
+
+  edge:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+      args:
+        PROJECT: src/edge/FinalRound.Edge.Api/FinalRound.Edge.Api.csproj
+    container_name: finalround-edge
+    command: ["FinalRound.Edge.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "https://+:443;http://+:80"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
+      ASPNETCORE_Kestrel__Certificates__Default__Password: FinalRoundDevPass123!
+    volumes:
+      - ../.aspnet/https:/https:ro
+    ports:
+      - "8080:80"
+      - "8443:443"
+      - "3500:3500"
+      - "50001:50001"
+    depends_on: [mysql, redis]
+    networks: [finalround]
+
+  edge-dapr:
+    image: daprio/daprd:latest
+    container_name: finalround-edge-dapr
+    command: [
+      "./daprd",
+      "--app-id", "finalround-edge",
+      "--app-port", "80",
+      "--app-protocol", "http",
+      "--resources-path", "/components",
+      "--dapr-http-port", "3500",
+      "--dapr-grpc-port", "50001",
+      "--placement-host-address", " ",
+      "--scheduler-host-address", " ",
+      "--log-level", "info"
+    ]
+    volumes:
+      - ./dapr/components:/components
+    depends_on: [edge]
+    network_mode: "service:edge"
+
+  tournament:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+      args:
+        PROJECT: src/services/FinalRound.Tournament.Api/FinalRound.Tournament.Api.csproj
+    container_name: finalround-tournament
+    command: ["FinalRound.Tournament.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:80"
+    depends_on: [mysql, redis]
+    networks: [finalround]
+
+  tournament-dapr:
+    image: daprio/daprd:latest
+    container_name: finalround-tournament-dapr
+    command: [
+      "./daprd",
+      "--app-id", "finalround-tournament",
+      "--app-port", "80",
+      "--app-protocol", "http",
+      "--resources-path", "/components",
+      "--placement-host-address", " ",
+      "--scheduler-host-address", " ",
+      "--log-level", "info"
+    ]
+    volumes:
+      - ./dapr/components:/components
+    depends_on: [tournament]
+    network_mode: "service:tournament"
+
+  identity:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+      args:
+        PROJECT: src/services/FinalRound.Identity.Api/FinalRound.Identity.Api.csproj
+    container_name: finalround-identity
+    command: ["FinalRound.Identity.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:80"
+    depends_on: [mysql, redis]
+    networks: [finalround]
+
+  identity-dapr:
+    image: daprio/daprd:latest
+    container_name: finalround-identity-dapr
+    command: ["./daprd","--app-id","finalround-identity","--app-port","80","--app-protocol","http","--resources-path","/components","--placement-host-address"," ","--scheduler-host-address"," ","--log-level","info"]
+    volumes:
+      - ./dapr/components:/components
+    depends_on: [identity]
+    network_mode: "service:identity"
+
+  match:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+      args:
+        PROJECT: src/services/FinalRound.Match.Api/FinalRound.Match.Api.csproj
+    container_name: finalround-match
+    command: ["FinalRound.Match.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:80"
+    depends_on: [mysql, redis]
+    networks: [finalround]
+
+  match-dapr:
+    image: daprio/daprd:latest
+    container_name: finalround-match-dapr
+    command: ["./daprd","--app-id","finalround-match","--app-port","80","--app-protocol","http","--resources-path","/components","--placement-host-address"," ","--scheduler-host-address"," ","--log-level","info"]
+    volumes:
+      - ./dapr/components:/components
+    depends_on: [match]
+    network_mode: "service:match"
+
+  ranking:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+      args:
+        PROJECT: src/services/FinalRound.Ranking.Api/FinalRound.Ranking.Api.csproj
+    container_name: finalround-ranking
+    command: ["FinalRound.Ranking.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:80"
+    depends_on: [mysql, redis]
+    networks: [finalround]
+
+  ranking-dapr:
+    image: daprio/daprd:latest
+    container_name: finalround-ranking-dapr
+    command: ["./daprd","--app-id","finalround-ranking","--app-port","80","--app-protocol","http","--resources-path","/components","--placement-host-address"," ","--scheduler-host-address"," ","--log-level","info"]
+    volumes:
+      - ./dapr/components:/components
+    depends_on: [ranking]
+    network_mode: "service:ranking"
+
+  notification:
+    build:
+      context: ..
+      dockerfile: infra/docker/Dockerfile
+      args:
+        PROJECT: src/services/FinalRound.Notification.Api/FinalRound.Notification.Api.csproj
+    container_name: finalround-notification
+    command: ["FinalRound.Notification.Api.dll"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://+:80"
+    depends_on: [mysql, redis]
+    networks: [finalround]
+
+  notification-dapr:
+    image: daprio/daprd:latest
+    container_name: finalround-notification-dapr
+    command: ["./daprd","--app-id","finalround-notification","--app-port","80","--app-protocol","http","--resources-path","/components","--placement-host-address"," ","--scheduler-host-address"," ","--log-level","info"]
+    volumes:
+      - ./dapr/components:/components
+    depends_on: [notification]
+    network_mode: "service:notification"
+
+networks:
+  finalround:
+
+volumes:
+  finalround_mysql_data:
+  finalround_redis_data:

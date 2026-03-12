@@ -1,0 +1,27 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: finalround-local-mysql
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123!
+      MYSQL_DATABASE: finalround
+    ports:
+      - "3307:3306"
+    volumes:
+      - finalround_local_mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: finalround-local-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - finalround_local_redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  finalround_local_mysql_data:
+  finalround_local_redis_data:
