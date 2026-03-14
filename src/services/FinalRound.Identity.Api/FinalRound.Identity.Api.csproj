@@ -9,7 +9,14 @@
   <ItemGroup>
     <PackageReference Include="Dapr.AspNetCore" Version="1.17.3" />
     <PackageReference Include="Dapr.Client" Version="1.17.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.13">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
   </ItemGroup>
 
@@ -17,6 +24,10 @@
     <ProjectReference Include="..\..\shared\FinalRound.Contracts\FinalRound.Contracts.csproj" />
     <ProjectReference Include="..\..\shared\FinalRound.Common\FinalRound.Common.csproj" />
     <ProjectReference Include="..\..\shared\FinalRound.ServiceDefaults\FinalRound.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Domain\" />
   </ItemGroup>
 
 </Project>
