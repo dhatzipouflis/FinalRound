@@ -6,9 +6,9 @@ namespace FinalRound.Identity.Api.Services.Interfaces;
 
 public interface IAuthService
 {
-    Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default);
-    Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
-    Task<AuthResponse> RefreshAsync(RefreshRequest request, CancellationToken cancellationToken = default);
-    Task LogoutAsync(Guid userId, LogoutRequest request, CancellationToken cancellationToken = default);
-    Task<MeResponse> GetMeAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default);
+    Task<AuthResponse> RegisterAsync(RegisterRequest request);
+    Task<AuthResponse> LoginAsync(LoginRequest request);
+    Task<AuthResponse> RefreshAsync(RefreshRequest request);
+    Task LogoutAsync(Guid userId, LogoutRequest request);
+    Task<MeResponse> GetMeAsync(ClaimsPrincipal principal);
 }

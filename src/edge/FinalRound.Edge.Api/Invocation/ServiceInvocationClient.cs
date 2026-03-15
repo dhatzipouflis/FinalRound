@@ -32,39 +32,64 @@ public sealed class ServiceInvocationClient : IServiceInvocationClient
     public Task<ApiResponse<TResponse>> InvokeAsync<TRequest, TResponse>(ResolvedServiceInvocation route, TRequest request, CancellationToken ct = default)
         => SendAsync<TResponse>(route, request, ct);
 
-    private async Task<ApiResponse<TResponse>> SendAsync<TResponse>(ResolvedServiceInvocation route, object? requestBody, CancellationToken ct)
+    private async Task<ApiResponse<TResponse>> SendAsync<TResponse>(
+        ResolvedServiceInvocation route,
+        object? requestBody,
+        CancellationToken ct)
     {
         var ctx = _httpContextAccessor.HttpContext!;
         var traceId = ctx.TraceIdentifier;
-        var correlationId = ctx.Request.Headers.TryGetValue(CorrelationTraceMiddleware.CorrelationHeader, out var cv)
+        var correlationId = ctx.Request.Headers.TryGetValue(
+            CorrelationTraceMiddleware.CorrelationHeader, out var cv)
             ? cv.ToString()
             : Guid.NewGuid().ToString("N");
 
         try
         {
-            var request = _daprClient.CreateInvokeMethodRequest(route.Method, route.AppId, route.MethodRoute);
+            var request = _daprClient.CreateInvokeMethodRequest(
+                route.Method,
+                route.AppId,
+                route.MethodRoute);
 
             if (requestBody is not null)
                 request.Content = JsonContent.Create(requestBody);
 
-            request.Headers.TryAddWithoutValidation(CorrelationTraceMiddleware.CorrelationHeader, correlationId);
+            request.Headers.TryAddWithoutValidation(
+                CorrelationTraceMiddleware.CorrelationHeader,
+                correlationId);
+
+            var authHeader = ctx.Request.Headers.Authorization.ToString();
+            if (!string.IsNullOrWhiteSpace(authHeader))
+            {
+                request.Headers.TryAddWithoutValidation("Authorization", authHeader);
+            }
 
 #pragma warning disable CS0618
             var response = await _daprClient.InvokeMethodWithResponseAsync(request, ct);
 #pragma warning restore CS0618
+
             var json = await response.Content.ReadAsStringAsync(ct);
 
             var parsed = Try<ApiResponse<TResponse>>(json);
             if (parsed is not null)
                 return parsed with { TraceId = traceId, CorrelationId = correlationId };
 
-            var err = new ApiError("upstream_nonstandard_response", $"Upstream returned {(HttpStatusCode)response.StatusCode}");
+            var err = new ApiError(
+                "upstream_nonstandard_response",
+                $"Upstream returned {(HttpStatusCode)response.StatusCode}");
+
             return ApiResponse<TResponse>.Fail([err], traceId, correlationId);
         }
         catch (Exception ex)
         {
-            var msg = _errorOptions.IncludeDetailedMessages ? ex.Message : "Upstream invocation failed";
-            return ApiResponse<TResponse>.Fail([new ApiError("invocation_exception", msg)], traceId, correlationId);
+            var msg = _errorOptions.IncludeDetailedMessages
+                ? ex.Message
+                : "Upstream invocation failed";
+
+            return ApiResponse<TResponse>.Fail(
+                [new ApiError("invocation_exception", msg)],
+                traceId,
+                correlationId);
         }
     }
 

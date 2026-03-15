@@ -26,7 +26,7 @@ public sealed class AuthService : IAuthService
         _tokenService = tokenService;
     }
 
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
+    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
     {
         var existingUser = await _userManager.FindByEmailAsync(request.Email);
         if (existingUser is not null)
@@ -53,10 +53,10 @@ public sealed class AuthService : IAuthService
 
         await _userManager.AddToRoleAsync(user, "User");
 
-        return await _tokenService.GenerateTokensAsync(user, cancellationToken);
+        return await _tokenService.GenerateTokensAsync(user);
     }
 
-    public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
+    public async Task<AuthResponse> LoginAsync(LoginRequest request)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is null)
@@ -70,38 +70,38 @@ public sealed class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid credentials.");
         }
 
-        return await _tokenService.GenerateTokensAsync(user, cancellationToken);
+        return await _tokenService.GenerateTokensAsync(user);
     }
 
-    public async Task<AuthResponse> RefreshAsync(RefreshRequest request, CancellationToken cancellationToken = default)
+    public async Task<AuthResponse> RefreshAsync(RefreshRequest request)
     {
         var refreshToken = await _dbContext.RefreshTokens
             .Include(x => x.User)
-            .FirstOrDefaultAsync(x => x.Token == request.RefreshToken, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Token == request.RefreshToken);
 
         if (refreshToken is null || !refreshToken.IsActive)
         {
             throw new UnauthorizedAccessException("Invalid refresh token.");
         }
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
         refreshToken.RevokedAtUtc = DateTime.UtcNow;
 
-        var response = await _tokenService.GenerateTokensAsync(refreshToken.User, cancellationToken);
+        var response = await _tokenService.GenerateTokensAsync(refreshToken.User);
 
         refreshToken.ReplacedByToken = response.RefreshToken;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.SaveChangesAsync();
 
-        await transaction.CommitAsync(cancellationToken);
+        await transaction.CommitAsync();
 
         return response;
     }
 
-    public async Task LogoutAsync(Guid userId, LogoutRequest request, CancellationToken cancellationToken = default)
+    public async Task LogoutAsync(Guid userId, LogoutRequest request)
     {
         var refreshToken = await _dbContext.RefreshTokens
-            .FirstOrDefaultAsync(x => x.Token == request.RefreshToken && x.UserId == userId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Token == request.RefreshToken && x.UserId == userId);
 
         if (refreshToken is null)
         {
@@ -111,11 +111,11 @@ public sealed class AuthService : IAuthService
         if (refreshToken.RevokedAtUtc is null)
         {
             refreshToken.RevokedAtUtc = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync();
         }
     }
 
-    public async Task<MeResponse> GetMeAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
+    public async Task<MeResponse> GetMeAsync(ClaimsPrincipal principal)
     {
         var userIdValue =
             principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
@@ -126,7 +126,7 @@ public sealed class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid user.");
         }
 
-        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
+        var user = await _userManager.Users.FirstOrDefaultAsync(x => x.Id == userId);
         if (user is null)
         {
             throw new KeyNotFoundException("User not found.");

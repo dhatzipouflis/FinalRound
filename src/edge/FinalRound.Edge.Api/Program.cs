@@ -14,6 +14,7 @@ builder.Services.Configure<ServiceInvocationOptions>(builder.Configuration.GetSe
 builder.Services.AddSingleton<IServiceInvocationResolver, ServiceInvocationResolver>();
 builder.Services.AddScoped<IServiceInvocationClient, ServiceInvocationClient>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 builder.Services
     .AddControllers()

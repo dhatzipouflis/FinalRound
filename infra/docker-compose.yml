@@ -1,15 +1,16 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: finalround-mysql
-    command: ["--default-authentication-plugin=mysql_native_password"]
+  postgres:
+    image: postgres:17-alpine
+    container_name: finalround-postgres
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass123!
-      MYSQL_DATABASE: finalround
+      POSTGRES_USER: finalround
+      POSTGRES_PASSWORD: finalroundpass123!
+      POSTGRES_DB: postgres
     ports:
-      - "3307:3306"
+      - "5432:5432"
     volumes:
-      - finalround_mysql_data:/var/lib/mysql
+      - finalround_postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
     restart: unless-stopped
     networks: [finalround]
 
@@ -44,24 +45,25 @@ services:
       - "8443:443"
       - "3500:3500"
       - "50001:50001"
-    depends_on: [mysql, redis]
+    depends_on: [postgres, redis]
     networks: [finalround]
 
   edge-dapr:
     image: daprio/daprd:latest
     container_name: finalround-edge-dapr
-    command: [
-      "./daprd",
-      "--app-id", "finalround-edge",
-      "--app-port", "80",
-      "--app-protocol", "http",
-      "--resources-path", "/components",
-      "--dapr-http-port", "3500",
-      "--dapr-grpc-port", "50001",
-      "--placement-host-address", " ",
-      "--scheduler-host-address", " ",
-      "--log-level", "info"
-    ]
+    command:
+      [
+        "./daprd",
+        "--app-id", "finalround-edge",
+        "--app-port", "80",
+        "--app-protocol", "http",
+        "--resources-path", "/components",
+        "--dapr-http-port", "3500",
+        "--dapr-grpc-port", "50001",
+        "--placement-host-address", " ",
+        "--scheduler-host-address", " ",
+        "--log-level", "info"
+      ]
     volumes:
       - ./dapr/components:/components
     depends_on: [edge]
@@ -78,22 +80,24 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:80"
-    depends_on: [mysql, redis]
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=finalround_tournament;Username=finalround;Password=finalroundpass123!"
+    depends_on: [postgres, redis]
     networks: [finalround]
 
   tournament-dapr:
     image: daprio/daprd:latest
     container_name: finalround-tournament-dapr
-    command: [
-      "./daprd",
-      "--app-id", "finalround-tournament",
-      "--app-port", "80",
-      "--app-protocol", "http",
-      "--resources-path", "/components",
-      "--placement-host-address", " ",
-      "--scheduler-host-address", " ",
-      "--log-level", "info"
-    ]
+    command:
+      [
+        "./daprd",
+        "--app-id", "finalround-tournament",
+        "--app-port", "80",
+        "--app-protocol", "http",
+        "--resources-path", "/components",
+        "--placement-host-address", " ",
+        "--scheduler-host-address", " ",
+        "--log-level", "info"
+      ]
     volumes:
       - ./dapr/components:/components
     depends_on: [tournament]
@@ -110,7 +114,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:80"
-    depends_on: [mysql, redis]
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=finalround_identity;Username=finalround;Password=finalroundpass123!"
+    depends_on: [postgres, redis]
     networks: [finalround]
 
   identity-dapr:
@@ -133,7 +138,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:80"
-    depends_on: [mysql, redis]
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=finalround_match;Username=finalround;Password=finalroundpass123!"
+    depends_on: [postgres, redis]
     networks: [finalround]
 
   match-dapr:
@@ -156,7 +162,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:80"
-    depends_on: [mysql, redis]
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=finalround_ranking;Username=finalround;Password=finalroundpass123!"
+    depends_on: [postgres, redis]
     networks: [finalround]
 
   ranking-dapr:
@@ -179,7 +186,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "http://+:80"
-    depends_on: [mysql, redis]
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=finalround_notification;Username=finalround;Password=finalroundpass123!"
+    depends_on: [postgres, redis]
     networks: [finalround]
 
   notification-dapr:
@@ -195,5 +203,5 @@ networks:
   finalround:
 
 volumes:
-  finalround_mysql_data:
+  finalround_postgres_data:
   finalround_redis_data:

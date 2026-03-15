@@ -23,9 +23,7 @@ public static class ServiceCollectionExtensions
 
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            options.UseMySql(
-                connectionString,
-                ServerVersion.AutoDetect(connectionString));
+            options.UseNpgsql(connectionString);
         });
 
         return services;
@@ -37,7 +35,6 @@ public static class ServiceCollectionExtensions
             .AddIdentityCore<AppUser>(options =>
             {
                 options.User.RequireUniqueEmail = true;
-
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
                 options.Password.RequireUppercase = true;
@@ -73,21 +70,16 @@ public static class ServiceCollectionExtensions
             .AddJwtBearer(options =>
             {
                 options.RequireHttpsMetadata = true;
-
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidIssuer = jwtOptions.Issuer,
-
                     ValidateAudience = true,
                     ValidAudience = jwtOptions.Audience,
-
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = signingKey,
-
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero,
-
                     NameClaimType = ClaimTypes.Name,
                     RoleClaimType = ClaimTypes.Role
                 };
