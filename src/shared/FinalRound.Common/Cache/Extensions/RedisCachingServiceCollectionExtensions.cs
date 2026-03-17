@@ -27,10 +27,10 @@ public static class RedisCachingServiceCollectionExtensions
         services.AddStackExchangeRedisCache(options =>
         {
             options.Configuration = redisOptions.ConnectionString;
-            options.InstanceName = redisOptions.InstanceName;
         });
 
         services.AddScoped<ICacheService, RedisCacheService>();
+        services.AddSingleton<ICacheKeyBuilder, CacheKeyBuilder>();
 
         return services;
     }

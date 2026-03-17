@@ -11,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<ErrorHandlingOptions>(builder.Configuration.GetSection("ErrorHandling"));
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddFinalRoundRedisCaching(builder.Configuration);
+
 builder.Services.Configure<ServiceInvocationOptions>(builder.Configuration.GetSection("ServiceInvocation"));
 builder.Services.AddSingleton<IServiceInvocationResolver, ServiceInvocationResolver>();
 builder.Services.AddScoped<IServiceInvocationClient, ServiceInvocationClient>();
@@ -26,7 +28,7 @@ builder.Services
         o.JsonSerializerOptions.DictionaryKeyPolicy = null;
         o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
-builder.Services.AddFinalRoundRedisCaching(builder.Configuration);
+
 builder.Services.AddDaprClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

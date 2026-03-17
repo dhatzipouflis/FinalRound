@@ -8,7 +8,7 @@ namespace FinalRound.Common.Cache.Services;
 public interface ICacheService
 {
     Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default);
-    
+
     Task SetAsync<T>(
         string key,
         T value,
@@ -16,13 +16,21 @@ public interface ICacheService
         CancellationToken cancellationToken = default);
 
     Task RemoveAsync(string key, CancellationToken cancellationToken = default);
-    
+
     Task<T?> GetOrSetAsync<T>(
         string key,
         Func<CancellationToken, Task<T>> factory,
         TimeSpan? absoluteExpirationRelativeToNow = null,
         bool cacheNullValues = false,
         CancellationToken cancellationToken = default);
+
+    Task<T?> GetOrSetAsync<T>(
+        string key,
+        Func<Task<T>> factory,
+        TimeSpan? absoluteExpirationRelativeToNow = null,
+        bool cacheNullValues = false,
+        CancellationToken cancellationToken = default);
+
 }
 
 public sealed class RedisCacheService : ICacheService
@@ -72,7 +80,7 @@ public sealed class RedisCacheService : ICacheService
 
     public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
         => _cache.RemoveAsync(key, cancellationToken);
-    
+
     public async Task<T?> GetOrSetAsync<T>(
         string key,
         Func<CancellationToken, Task<T>> factory,
@@ -97,8 +105,21 @@ public sealed class RedisCacheService : ICacheService
         return value;
     }
 
-    private static bool IsDefaultValue<T>(T? value)
+    public Task<T?> GetOrSetAsync<T>(
+        string key,
+        Func<Task<T>> factory,
+        TimeSpan? absoluteExpirationRelativeToNow = null,
+        bool cacheNullValues = false,
+        CancellationToken cancellationToken = default)
     {
-        return EqualityComparer<T>.Default.Equals(value!, default!);
+        return GetOrSetAsync(
+            key,
+            _ => factory(),
+            absoluteExpirationRelativeToNow,
+            cacheNullValues,
+            cancellationToken);
     }
+
+    private static bool IsDefaultValue<T>(T? value)
+        => EqualityComparer<T>.Default.Equals(value!, default!);
 }
