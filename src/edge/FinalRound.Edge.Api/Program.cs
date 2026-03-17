@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using FinalRound.Common.Api;
+using FinalRound.Common.Cache.Extensions;
 using FinalRound.Contracts.Api;
 using FinalRound.Edge.Api.Invocation;
 using FinalRound.Edge.Api.Services;
@@ -25,7 +26,7 @@ builder.Services
         o.JsonSerializerOptions.DictionaryKeyPolicy = null;
         o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
-
+builder.Services.AddFinalRoundRedisCaching(builder.Configuration);
 builder.Services.AddDaprClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
